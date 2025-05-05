@@ -1,0 +1,31 @@
+[
+    {
+      "id": 1,
+      "name": "Camiseta React",
+      "description": "Camiseta 100% algodón con logo de React.",
+      "price": 25,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 2,
+      "name": "Gorra Vite",
+      "description": "Gorra bordada con el logo de Vite.",
+      "price": 20,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 3,
+      "name": "Taza JS",
+      "description": "Taza para café con logo de JavaScript.",
+      "price": 15,
+      "image": "https://via.placeholder.com/150"
+    },
+    {
+      "id": 4,
+      "name": "Sticker Pack",
+      "description": "Stickers de tecnologías web.",
+      "price": 5,
+      "image": "https://via.placeholder.com/150"
+    }
+  ]
+  
