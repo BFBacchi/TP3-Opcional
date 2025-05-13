@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { db } from '../../config/firebase'
+import { collection, getDocs, setDoc, doc } from 'firebase/firestore'
 
 const PRODUCTS_PER_PAGE = 10
 
@@ -9,16 +11,29 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1)
 
   useEffect(() => {
-    fetch('https://fakestoreapi.com/products')
-      .then(res => res.json())
-      .then(data => {
+    const fetchProducts = async () => {
+      setLoading(true)
+      const productsCol = collection(db, "products")
+      const productsSnapshot = await getDocs(productsCol)
+      let productsList = []
+      productsSnapshot.forEach(doc => {
+        productsList.push({ id: doc.id, ...doc.data() })
+      })
+
+      if (productsList.length === 0) {
+        // Si no hay productos en Firestore, los traemos de la API y los guardamos
+        const res = await fetch('https://fakestoreapi.com/products')
+        const data = await res.json()
+        for (const prod of data) {
+         await setDoc(doc(productsCol, String(prod.id)), prod)
+        }
         setProducts(data)
-        setLoading(false)
-      })
-      .catch(error => {
-        console.error('Error al cargar los productos:', error)
-        setLoading(false)
-      })
+      } else {
+        setProducts(productsList)
+      }
+      setLoading(false)
+    }
+    fetchProducts()
   }, [])
 
   const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE)
@@ -36,7 +51,6 @@ export default function Home() {
   return (
     <div>
       <h1 className="title">Productos</h1>
-
       <div className="columns is-multiline">
         {currentProducts.map(product => (
           <div className="column is-one-quarter" key={product.id}>
@@ -57,7 +71,6 @@ export default function Home() {
           </div>
         ))}
       </div>
-
       {/* Paginación */}
       <nav className="pagination is-centered mt-5" role="navigation" aria-label="pagination">
         <button
