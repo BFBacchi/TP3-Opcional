@@ -6,6 +6,7 @@ import Register from './components/register/Register.jsx'
 import Login from './components/login/Login.jsx'
 import Home from './components/home/Home.jsx'
 import ProductDetail from './components/product/ProductDetail.jsx'
+import Backoffice from './components/BackOffice.jsx'
 import 'bulma/css/bulma.min.css'
 import './index.css'
 
@@ -17,6 +18,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/product/:id" element={<ProductDetail />} />
+        <Route path="/backoffice" element={<Backoffice />} />
       </Route>
     </Routes>
   </BrowserRouter>
