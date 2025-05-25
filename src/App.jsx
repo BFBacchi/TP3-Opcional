@@ -1,18 +1,20 @@
 import { Outlet, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useContext } from 'react';
+import { signOut } from 'firebase/auth';
 import { auth } from './config/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { CartContext } from './context/CartContext';
+import { useAuth } from './context/AuthContext';
 
 export default function App() {
-  const [user, setUser] = useState(null);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (u) => setUser(u));
-    return () => unsubscribe();
-  }, []);
+  const { currentUser } = useAuth();
+  const { getItemCount } = useContext(CartContext);
 
   const handleLogout = async () => {
-    await signOut(auth);
+    try {
+      await signOut(auth);
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    }
   };
 
   return (
@@ -20,20 +22,26 @@ export default function App() {
       <nav className="navbar hero mb-3">
         <div className="navbar-brand">
           <Link to="/" className="hero-title">
-            <a className="navbar-item" href="../">
+            <span className="navbar-item">
               <img src="https://bulma.io/assets/images/bulma-type-white.png" alt="Logo" />
-            </a>
+            </span>
           </Link>
         </div>
         <div className="navbar-menu">
           <div className="navbar-end">
-            {!user && (
+            <Link to="/cart" className="navbar-item">
+              <span className="icon">
+                <i className="fas fa-shopping-cart"></i>
+              </span>
+              <span>Carrito ({getItemCount()})</span>
+            </Link>
+            {!currentUser && (
               <>
                 <Link to="/login" className="button is-white is-outlined mr-4">Login</Link>
                 <Link to="/register" className="button is-white is-outlined">Registro</Link>
               </>
             )}
-            {user && (
+            {currentUser && (
               <>
                 <button className="button is-danger mr-4" onClick={handleLogout}>Logout</button>
                 <Link to="/backoffice" className="button is-warning">Backoffice</Link>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../../config/firebase';
-import { collection, getDocs, setDoc, doc } from 'firebase/firestore';
-
+import { collection, getDocs, setDoc, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { CartContext } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
 
 const PRODUCTS_PER_PAGE = 10;
 
@@ -10,11 +11,40 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [categories, setCategories] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [favorites, setFavorites] = useState([]);
 
+  const { addItemToCart } = useContext(CartContext);
+  const { currentUser } = useAuth();
 
- 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const loadFavorites = async () => {
+      if (currentUser) {
+        const favDocRef = doc(db, 'userFavorites', currentUser.uid);
+        const favDocSnap = await getDoc(favDocRef);
+        if (favDocSnap.exists()) {
+          setFavorites(favDocSnap.data().productIds || []);
+        } else {
+          setFavorites([]);
+        }
+      } else {
+        const savedFavorites = localStorage.getItem('favorites');
+        setFavorites(savedFavorites ? JSON.parse(savedFavorites) : []);
+      }
+    };
+    loadFavorites();
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (!currentUser) {
+      localStorage.setItem('favorites', JSON.stringify(favorites));
+    }
+  }, [favorites, currentUser]);
+
+  useEffect(() => {
+    const fetchProductsAndCategories = async () => {
       setLoading(true);
       const productsCol = collection(db, "products");
       const productsSnapshot = await getDocs(productsCol);
@@ -33,14 +63,73 @@ export default function Home() {
       } else {
         setProducts(productsList);
       }
+
+      try {
+        const catRes = await fetch('https://fakestoreapi.com/products/categories');
+        const catData = await catRes.json();
+        setCategories(catData);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        setCategories([]);
+      }
+      
       setLoading(false);
     };
-    fetchProducts();
+    fetchProductsAndCategories();
   }, []);
 
-  const totalPages = Math.ceil(products.length / PRODUCTS_PER_PAGE);
+  const handleCategoryChange = (event) => {
+    setSelectedCategory(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchTerm(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const toggleFavorite = async (productId) => {
+    const isFavorite = favorites.includes(productId);
+    let updatedFavorites;
+
+    if (isFavorite) {
+      updatedFavorites = favorites.filter(id => id !== productId);
+    } else {
+      updatedFavorites = [...favorites, productId];
+    }
+    setFavorites(updatedFavorites);
+
+    if (currentUser) {
+      const favDocRef = doc(db, 'userFavorites', currentUser.uid);
+      try {
+        if (isFavorite) {
+          await updateDoc(favDocRef, { productIds: arrayRemove(productId) });
+        } else {
+          const favDocSnap = await getDoc(favDocRef);
+          if (favDocSnap.exists()){
+            await updateDoc(favDocRef, { productIds: arrayUnion(productId) });
+          } else {
+            await setDoc(favDocRef, { productIds: [productId] });
+          }
+        }
+      } catch (error) {
+        console.error("Error updating favorites in Firestore:", error);
+        setFavorites(favorites);
+      }
+    }
+  };
+
+  const filteredProducts = products
+    .filter(product => 
+      selectedCategory ? product.category === selectedCategory : true
+    )
+    .filter(product => 
+      product.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+  const totalPages = Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE);
   const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
-  const currentProducts = products.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+  const currentProducts = filteredProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
 
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -48,13 +137,47 @@ export default function Home() {
     }
   };
 
-  
   if (loading) return <p>Cargando productos...</p>;
 
   return (
     <div>
-      
       <h1 className="title">Productos</h1>
+
+      <div className="columns is-vcentered mb-5">
+        <div className="column is-half">
+          <div className="field">
+            <label className="label" htmlFor="search-input">Buscar Productos</label>
+            <div className="control">
+              <input
+                id="search-input"
+                className="input"
+                type="text"
+                placeholder="Buscar por nombre..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="column is-half">
+          <div className="field">
+            <label className="label" htmlFor="category-select">Filtrar por Categoría</label>
+            <div className="control">
+              <div className="select is-fullwidth">
+                <select id="category-select" value={selectedCategory} onChange={handleCategoryChange}>
+                  <option value="">Todas las categorías</option>
+                  {categories && categories.map(category => (
+                    <option key={category} value={category}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="columns is-multiline">
         {currentProducts.map(product => (
           <div className="column is-one-quarter" key={product.id}>
@@ -65,44 +188,70 @@ export default function Home() {
                 </figure>
               </div>
               <div className="card-content">
-                <p className="title is-6">{product.title}</p>
+                <div className="media">
+                  <div className="media-content">
+                    <p className="title is-6">{product.title}</p>
+                  </div>
+                  <div className="media-right">
+                    <button 
+                      className="button is-ghost" 
+                      onClick={() => toggleFavorite(product.id)}
+                      aria-label={favorites.includes(product.id) ? "Quitar de favoritos" : "Añadir a favoritos"}
+                    >
+                      <span className="icon is-small">
+                        {favorites.includes(product.id) ? '❤️' : '♡'}
+                      </span>
+                    </button>
+                  </div>
+                </div>
                 <p>${product.price}</p>
-                <Link to={`/product/${product.id}`} className="button is-link is-small mt-2">
-                  Ver más
-                </Link>
+                <div className="buttons mt-2">
+                  <Link to={`/product/${product.id}`} className="button is-link is-small">
+                    Ver más
+                  </Link>
+                  <button 
+                    className="button is-success is-small" 
+                    onClick={() => addItemToCart(product)}
+                  >
+                    Añadir al Carrito
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         ))}
       </div>
-      <nav className="pagination is-centered mt-5" role="navigation" aria-label="pagination">
-        <button
-          className="pagination-previous"
-          onClick={() => goToPage(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          Anterior
-        </button>
-        <button
-          className="pagination-next"
-          onClick={() => goToPage(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Siguiente
-        </button>
-        <ul className="pagination-list">
-          {[...Array(totalPages)].map((_, index) => (
-            <li key={index}>
-              <button
-                className={`pagination-link ${currentPage === index + 1 ? 'is-current' : ''}`}
-                onClick={() => goToPage(index + 1)}
-              >
-                {index + 1}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
+
+      {totalPages > 0 && (
+        <nav className="pagination is-centered mt-5" role="navigation" aria-label="pagination">
+          <button
+            className="pagination-previous"
+            onClick={() => goToPage(currentPage - 1)}
+            disabled={currentPage === 1}
+          >
+            Anterior
+          </button>
+          <button
+            className="pagination-next"
+            onClick={() => goToPage(currentPage + 1)}
+            disabled={currentPage === totalPages || currentProducts.length === 0}
+          >
+            Siguiente
+          </button>
+          <ul className="pagination-list">
+            {[...Array(totalPages)].map((_, index) => (
+              <li key={index}>
+                <button
+                  className={`pagination-link ${currentPage === index + 1 ? 'is-current' : ''}`}
+                  onClick={() => goToPage(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      )}
     </div>
   );
 }
