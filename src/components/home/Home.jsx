@@ -4,6 +4,7 @@ import { db } from '../../config/firebase';
 import { collection, getDocs, setDoc, doc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import { CartContext } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import Swal from 'sweetalert2';
 
 const PRODUCTS_PER_PAGE = 10;
 
@@ -42,7 +43,7 @@ export default function Home() {
       localStorage.setItem('favorites', JSON.stringify(favorites));
     }
   }, [favorites, currentUser]);
-
+ 
   useEffect(() => {
     const fetchProductsAndCategories = async () => {
       setLoading(true);
@@ -119,6 +120,25 @@ export default function Home() {
     }
   };
 
+  const handleAddToCart = (product) => {
+    if (!currentUser) {
+      Swal.fire({
+        title: '¡Necesitas iniciar sesión!',
+        text: 'Para añadir productos al carrito, primero debes iniciar sesión',
+        icon: 'warning',
+        confirmButtonText: 'Ir a Login',
+        showCancelButton: true,
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = '/login';
+        }
+      });
+      return;
+    }
+    addItemToCart(product);
+  };
+
   const filteredProducts = products
     .filter(product => 
       selectedCategory ? product.category === selectedCategory : true
@@ -136,7 +156,7 @@ export default function Home() {
       setCurrentPage(page);
     }
   };
-
+  
   if (loading) return <p>Cargando productos...</p>;
 
   return (
@@ -181,16 +201,33 @@ export default function Home() {
       <div className="columns is-multiline">
         {currentProducts.map(product => (
           <div className="column is-one-quarter" key={product.id}>
-            <div className="card">
-              <div className="card-image">
-                <figure className="image is-4by3">
-                  <img src={product.image} alt={product.title} />
+            <div className="card" style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+              <div className="card-image" style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+                <figure className="image" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img 
+                    src={product.image} 
+                    alt={product.title} 
+                    style={{ 
+                      maxHeight: '100%', 
+                      maxWidth: '100%', 
+                      objectFit: 'contain' 
+                    }} 
+                  />
                 </figure>
               </div>
-              <div className="card-content">
+              <div className="card-content" style={{ flex: '1', display: 'flex', flexDirection: 'column' }}>
                 <div className="media">
                   <div className="media-content">
-                    <p className="title is-6">{product.title}</p>
+                    <p className="title is-6" style={{ 
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      minHeight: '2.5em'
+                    }}>
+                      {product.title}
+                    </p>
                   </div>
                   <div className="media-right">
                     <button 
@@ -204,14 +241,14 @@ export default function Home() {
                     </button>
                   </div>
                 </div>
-                <p>${product.price}</p>
-                <div className="buttons mt-2">
+                <p className="has-text-weight-bold">${product.price}</p>
+                <div className="buttons mt-2" style={{ marginTop: 'auto' }}>
                   <Link to={`/product/${product.id}`} className="button is-link is-small">
                     Ver más
                   </Link>
                   <button 
                     className="button is-success is-small" 
-                    onClick={() => addItemToCart(product)}
+                    onClick={() => handleAddToCart(product)}
                   >
                     Añadir al Carrito
                   </button>
@@ -223,34 +260,34 @@ export default function Home() {
       </div>
 
       {totalPages > 0 && (
-        <nav className="pagination is-centered mt-5" role="navigation" aria-label="pagination">
-          <button
-            className="pagination-previous"
-            onClick={() => goToPage(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            Anterior
-          </button>
-          <button
-            className="pagination-next"
-            onClick={() => goToPage(currentPage + 1)}
+      <nav className="pagination is-centered mt-5" role="navigation" aria-label="pagination">
+        <button
+          className="pagination-previous"
+          onClick={() => goToPage(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          Anterior
+        </button>
+        <button
+          className="pagination-next"
+          onClick={() => goToPage(currentPage + 1)}
             disabled={currentPage === totalPages || currentProducts.length === 0}
-          >
-            Siguiente
-          </button>
-          <ul className="pagination-list">
-            {[...Array(totalPages)].map((_, index) => (
-              <li key={index}>
-                <button
-                  className={`pagination-link ${currentPage === index + 1 ? 'is-current' : ''}`}
-                  onClick={() => goToPage(index + 1)}
-                >
-                  {index + 1}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        >
+          Siguiente
+        </button>
+        <ul className="pagination-list">
+          {[...Array(totalPages)].map((_, index) => (
+            <li key={index}>
+              <button
+                className={`pagination-link ${currentPage === index + 1 ? 'is-current' : ''}`}
+                onClick={() => goToPage(index + 1)}
+              >
+                {index + 1}
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
       )}
     </div>
   );

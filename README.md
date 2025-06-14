@@ -48,11 +48,11 @@ Este es un pequeño proyecto de ecommerce construido con React y Vite, utilizand
 
 - **Framework/Librerías:**
     - [React](https://reactjs.org/) (con Hooks)
-    - [Vite](https://vitejs.dev/)
-    - [Bulma](https://bulma.io/)
-    - [React Router DOM](https://reactrouter.com/)
+- [Vite](https://vitejs.dev/)
+- [Bulma](https://bulma.io/)
+- [React Router DOM](https://reactrouter.com/)
 - **Firebase:**
-    - [Firebase Authentication](https://firebase.google.com/products/auth)
+- [Firebase Authentication](https://firebase.google.com/products/auth)
     - [Firebase Firestore](https://firebase.google.com/products/firestore) (Base de Datos NoSQL)
 - **Gestión de Estado:**
     - React Context API (`AuthContext` para la autenticación, `CartContext` para el carrito).
@@ -64,14 +64,14 @@ Este es un pequeño proyecto de ecommerce construido con React y Vite, utilizand
 ## 📦 Instalación
 
 1.  Cloná el repositorio:
-    ```bash
-    git clone https://github.com/tu-usuario/mini-ecommerce-react.git
-    cd mini-ecommerce-react
-    ```
+```bash
+git clone https://github.com/tu-usuario/mini-ecommerce-react.git
+cd mini-ecommerce-react
+```
 2.  Instalá las dependencias:
-    ```bash
-    npm install
-    ```
+```bash
+npm install
+```
 3.  Configurá Firebase:
     *   Crea un proyecto en [Firebase](https://console.firebase.google.com/).
     *   Habilita **Firestore** en modo de prueba (o con reglas adecuadas para producción).
@@ -89,11 +89,11 @@ Este es un pequeño proyecto de ecommerce construido con React y Vite, utilizand
     *   Asegúrate que tu archivo `src/config/firebase.js` esté configurado para usar estas variables de entorno:
         ```javascript
         // src/config/firebase.js
-        import { initializeApp } from "firebase/app";
-        import { getFirestore } from "firebase/firestore";
-        import { getAuth } from "firebase/auth";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
 
-        const firebaseConfig = {
+const firebaseConfig = {
           apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
           authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
           projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
@@ -101,20 +101,20 @@ Este es un pequeño proyecto de ecommerce construido con React y Vite, utilizand
           messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
           appId: import.meta.env.VITE_FIREBASE_APP_ID,
           measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
-        };
+};
 
-        const app = initializeApp(firebaseConfig);
-        export const db = getFirestore(app);
-        export const auth = getAuth(app);
-        ```
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+```
     *   Las reglas recomendadas para desarrollo en Firestore son (ajústalas para producción):
-        ```plaintext
-        service cloud.firestore {
-          match /databases/{database}/documents {
+```plaintext
+service cloud.firestore {
+  match /databases/{database}/documents {
             // Permite lectura y escritura global, solo para desarrollo
-            match /{document=**} {
-              allow read, write: if true;
-            }
+    match /{document=**} {
+      allow read, write: if true;
+    }
 
             // Reglas más específicas para producción (ejemplo):
             // match /products/{productId} {
@@ -127,14 +127,14 @@ Este es un pequeño proyecto de ecommerce construido con React y Vite, utilizand
             // match /userCarts/{userId} {
             //   allow read, write: if request.auth != null && request.auth.uid == userId;
             // }
-          }
-        }
-        ```
+  }
+}
+```
 
 4.  Iniciá la app:
-    ```bash
-    npm run dev
-    ```
+```bash
+npm run dev
+```
 
 ## ⚠️ Notas Importantes
 
