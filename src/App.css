@@ -1,5 +1,5 @@
 #root {
-  max-width: 1280px;
+  max-width: 1664px;
   margin: 0 auto;
   padding: 2rem;
   text-align: center;
@@ -34,9 +34,43 @@
 }
 
 .card {
-  padding: 2em;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.card:hover .card-image {
+  transform: scale(1.05);
+}
+
+.card-image {
+  transition: transform 0.3s ease;
 }
 
 .read-the-docs {
   color: #888;
+}
+
+/* Estilos para el backoffice */
+.table tbody tr {
+  transition: font-size 0.3s ease, color 0.3s ease;
+}
+
+.table tbody tr:hover {
+  cursor: pointer;
+  color: #000000;
+  font-size: 1.05em;
+}
+
+.box {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }

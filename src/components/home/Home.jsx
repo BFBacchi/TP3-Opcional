@@ -5,6 +5,7 @@ import { collection, getDocs, setDoc, doc, getDoc, updateDoc, arrayUnion, arrayR
 import { CartContext } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
 import Swal from 'sweetalert2';
+import '../../App.css';
 
 const PRODUCTS_PER_PAGE = 10;
 

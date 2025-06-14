@@ -71,24 +71,54 @@ export default function Backoffice() {
         </div>
       </div>
 
-      <table className="table is-fullwidth is-striped mt-5">
-        <thead>
-          <tr>
-            <th>Título</th>
-            <th>Precio</th>
-            <th>Categoría</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {products.map(prod => (
-            <tr key={prod.id}>
-              <td>{prod.title}</td>
-              <td>${prod.price}</td>
-              <td>{prod.category}</td>
-              <td>
+      {/* Vista de escritorio */}
+      <div className="is-hidden-mobile">
+        <table className="table is-fullwidth is-striped mt-5">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Precio</th>
+              <th>Categoría</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map(prod => (
+              <tr key={prod.id}>
+                <td>{prod.title}</td>
+                <td>${prod.price}</td>
+                <td>{prod.category}</td>
+                <td>
+                  <button
+                    className="button is-small is-info mr-2"
+                    onClick={() => handleEdit(prod)}
+                  >
+                    Modificar
+                  </button>
+                  <button
+                    className="button is-small is-danger"
+                    onClick={() => handleDelete(prod.id)}
+                  >
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Vista móvil */}
+      <div className="is-hidden-tablet">
+        {products.map(prod => (
+          <div key={prod.id} className="box mb-4">
+            <div className="content">
+              <p className="has-text-weight-bold">{prod.title}</p>
+              <p>Precio: ${prod.price}</p>
+              <p>Categoría: {prod.category}</p>
+              <div className="buttons">
                 <button
-                  className="button is-small is-info mr-2"
+                  className="button is-small is-info"
                   onClick={() => handleEdit(prod)}
                 >
                   Modificar
@@ -99,11 +129,11 @@ export default function Backoffice() {
                 >
                   Eliminar
                 </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
